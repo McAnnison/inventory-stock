@@ -1,6 +1,6 @@
-import React from 'react';
-import { Activity, Target, Zap, TrendingDown, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
+import React, { useState } from 'react';
+import { Target, Zap, TrendingDown, AlertTriangle, CheckCircle2, Sparkles, BellRing } from 'lucide-react';
+import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
 const performanceData = [
   { time: '08:00', accuracy: 91 },
@@ -11,6 +11,29 @@ const performanceData = [
 ];
 
 export const Dashboard = () => {
+  const [insights, setInsights] = useState<string | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
+
+  const fetchInsights = async () => {
+    setLoadingAI(true);
+    setInsights(null);
+    try {
+      const res = await fetch('/api/ai/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inventoryData: { activeAisles: 4, missingItems: ['Bread Loaf', 'Soda Can'], detectionAccuracy: '94.2%' }
+        })
+      });
+      const data = await res.json();
+      setInsights(data.text);
+    } catch (e) {
+      setInsights("Failed to connect to AI server. Please try again.");
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
   return (
     <div className="p-4 space-y-6 pb-24">
       
@@ -63,10 +86,42 @@ export const Dashboard = () => {
         </div>
       </div>
 
+      {/* AI Assistant */}
+      <div className="bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-800 text-white">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="w-4 h-4 text-blue-400" />
+            <h2 className="text-xs font-bold uppercase tracking-tighter">Gemini AI Assistant</h2>
+          </div>
+          <button 
+            onClick={fetchInsights}
+            disabled={loadingAI}
+            className="text-[10px] font-bold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded uppercase transition-colors disabled:opacity-50"
+          >
+            {loadingAI ? 'Analyzing...' : 'Generate Insights'}
+          </button>
+        </div>
+        
+        <div className="text-xs text-slate-400 min-h-[40px]">
+          {loadingAI ? (
+            <div className="flex items-center space-x-2 animate-pulse">
+              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+              <span>Processing shelf telemetry data...</span>
+            </div>
+          ) : insights ? (
+            <div className="text-slate-200 leading-relaxed font-mono whitespace-pre-wrap">{insights}</div>
+          ) : (
+            <p>Ready to analyze real-time inventory anomalies and suggest restocking actions.</p>
+          )}
+        </div>
+      </div>
+
       {/* Recent Alerts */}
       <div>
         <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-tighter">System Events</h3>
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-tighter flex items-center gap-1">
+            <BellRing className="w-3 h-3" /> System Events
+          </h3>
         </div>
         <div className="space-y-2">
           <AlertItem 
