@@ -1,0 +1,6 @@
+{
+  "name": "Stock Pulse",
+  "description": "Real-time computer vision for shelf-edge inventory auditing and smart point-of-sale. Features offline sync and secure authentication.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
