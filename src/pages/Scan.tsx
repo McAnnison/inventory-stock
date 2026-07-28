@@ -1,20 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { Camera, Maximize, AlertCircle, ScanLine } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Camera, Maximize, AlertCircle, ScanLine, CameraOff } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const Scan = () => {
   const [scanning, setScanning] = useState(true);
   const [detections, setDetections] = useState<any[]>([]);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [cameraError, setCameraError] = useState(false);
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    
+    const startCamera = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Error accessing camera:", err);
+        setCameraError(true);
+      }
+    };
+
+    startCamera();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   useEffect(() => {
     // Simulate AI detection process
     if (scanning) {
       const timer = setTimeout(() => {
         setDetections([
-          { id: 1, label: 'Soda Can', conf: 0.98, box: 'top-10 left-4 w-16 h-24', color: 'border-green-500 text-green-500 bg-green-500/10' },
-          { id: 2, label: 'Soda Can', conf: 0.98, box: 'top-10 left-24 w-16 h-24', color: 'border-green-500 text-green-500 bg-green-500/10' },
-          { id: 3, label: 'Bread', conf: 0.85, box: 'top-48 left-4 w-32 h-16', color: 'border-green-500 text-green-500 bg-green-500/10' },
-          { id: 4, label: 'Missing Item Alert', conf: null, box: 'top-72 left-24 w-32 h-20', color: 'border-red-500 text-red-500 bg-red-500/10', alert: true },
+          { id: 1, label: 'Soda Can', conf: 0.98, box: 'top-[10%] left-[10%] w-[20%] h-[30%]', color: 'border-emerald-500 text-emerald-500 bg-emerald-500/10' },
+          { id: 2, label: 'Soda Can', conf: 0.98, box: 'top-[10%] left-[40%] w-[20%] h-[30%]', color: 'border-emerald-500 text-emerald-500 bg-emerald-500/10' },
+          { id: 3, label: 'Bread', conf: 0.85, box: 'top-[50%] left-[10%] w-[40%] h-[20%]', color: 'border-emerald-500 text-emerald-500 bg-emerald-500/10' },
+          { id: 4, label: 'Missing Item Alert', conf: null, box: 'top-[70%] left-[40%] w-[40%] h-[20%]', color: 'border-rose-500 text-rose-500 bg-rose-500/10', alert: true },
         ]);
         setScanning(false);
       }, 2000);
@@ -27,8 +55,21 @@ export const Scan = () => {
       
       {/* Camera Viewport Simulation */}
       <div className="relative flex-1 overflow-hidden bg-slate-800 flex items-center justify-center">
-        {/* Placeholder background representing shelf */}
-        <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center" />
+        {cameraError ? (
+          <div className="flex flex-col items-center justify-center text-slate-400 z-10">
+            <CameraOff className="w-12 h-12 mb-2 opacity-50" />
+            <p className="text-sm font-medium">Camera access denied</p>
+            <p className="text-xs mt-1">Please allow camera permissions.</p>
+          </div>
+        ) : (
+          <video 
+            ref={videoRef}
+            autoPlay 
+            playsInline 
+            muted 
+            className="absolute inset-0 w-full h-full object-cover opacity-60"
+          />
+        )}
         
         {/* Scanning Overlay */}
         {scanning && (
